@@ -3,7 +3,7 @@ from groq import Groq
 import os
 from datetime import datetime
 
-# 1. Initialize State
+# 1. Initialize God Mode & Memory
 if "god_mode" not in st.session_state:
     st.session_state.god_mode = False
 if "custom_css" not in st.session_state:
@@ -13,94 +13,89 @@ if "oracle_rules" not in st.session_state:
 if "location" not in st.session_state:
     st.session_state.location = "Deep Space Orbit"
 
-# 2. Full Celestial GUI & Animation Engine
+# 2. Celestial GUI & Animation (Fixed Z-Index & Visibility)
 st.set_page_config(page_title="Celestial Scrolls", layout="wide")
 
 st.markdown(f"""
 <style>
-    /* Background & Stars */
+    /* Main Background */
     .stApp {{
-        background: linear-gradient(to bottom, #2d1b4d, #1a1a2e);
+        background: linear-gradient(135deg, #2d1b4d 0%, #1a1a2e 100%) !important;
         color: #e0e0e0;
     }}
 
-    @keyframes move-stars {{ from {{ transform: translateY(0); }} to {{ transform: translateY(-1000px); }} }}
+    /* FIXED Star Animation */
+    @keyframes star-flicker {{ 0%, 100% {{ opacity: 0.3; }} 50% {{ opacity: 1; }} }}
     .stars {{
-        position: fixed; top: 0; left: 0; width: 100%; height: 200%;
-        background: transparent url('https://transparenttextures.com') repeat;
-        animation: move-stars 100s linear infinite; z-index: -2; opacity: 0.4;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-image: 
+            radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 50px 160px, #ddd, rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0));
+        background-size: 200px 200px;
+        animation: star-flicker 5s infinite;
+        z-index: -1;
     }}
 
-    /* Aurora Animation */
-    @keyframes drift {{ from {{ transform: translateX(-15%) skewX(10deg); }} to {{ transform: translateX(15%) skewX(-10deg); }} }}
-    .aurora {{
-        position: fixed; top: -20%; left: -20%; width: 140%; height: 140%;
-        background: radial-gradient(circle at 50% 50%, rgba(100, 255, 218, 0.15) 0%, transparent 60%);
-        filter: blur(60px); animation: drift 25s ease-in-out infinite alternate; z-index: -3;
-    }}
-
-    /* Rocket Animation */
-    @keyframes rocket-pass {{ 
-        0% {{ left: -10%; bottom: 10%; transform: rotate(45deg); }} 
-        100% {{ left: 110%; bottom: 90%; transform: rotate(45deg); }} 
+    /* Rocket Animation - Every 30s */
+    @keyframes rocket-fly {{ 
+        0% {{ transform: translate(-10vw, 100vh) rotate(45deg); }} 
+        100% {{ transform: translate(110vw, -10vh) rotate(45deg); }} 
     }}
     .rocket {{
-        position: fixed; font-size: 2.5rem; z-index: -1;
-        animation: rocket-pass 20s linear infinite;
+        position: fixed; font-size: 3rem; z-index: 0;
+        animation: rocket-fly 20s linear infinite;
     }}
 
-    /* Header Styling */
-    .new-scroll-header {{
+    /* Top HUD Styling */
+    .scroll-header {{
         text-align: center; font-family: 'Georgia', serif; font-style: italic;
         color: rgba(255,255,255,0.4); font-size: 1.5rem; letter-spacing: 8px;
         margin-top: 20px; text-transform: uppercase;
     }}
-
-    .top-info {{
+    .hud-info {{
         text-align: center; font-family: 'Courier New', monospace; 
-        color: #8892b0; font-size: 0.9rem; margin-bottom: 20px;
+        color: #b8a37e; font-size: 1rem; margin-bottom: 30px;
     }}
 
-    /* Manuscript Input Bar Styling */
-    .stChatInputContainer {{ border: none !important; background: transparent !important; }}
+    /* Manuscript Bar Styling */
+    .stChatInputContainer {{ border: none !important; background: transparent !important; padding-bottom: 30px; }}
     .stChatInput textarea {{
-        background-color: #f4e4bc !important; /* Aged Paper */
+        background-color: #f4e4bc !important; 
         color: #2d1b4d !important;
-        border: 3px solid #b8a37e !important;
+        border: 4px solid #8e735b !important;
         font-family: 'Palatino', serif !important;
-        font-size: 1.1rem !important;
-        border-radius: 8px !important;
-        box-shadow: 0px 10px 30px rgba(0,0,0,0.5) !important;
+        font-size: 1.2rem !important;
+        border-radius: 12px !important;
+        box-shadow: 0px 15px 40px rgba(0,0,0,0.6) !important;
     }}
 
-    /* User/Assistant Chat Bubbles */
-    .stChatMessage {{ background: rgba(255, 255, 255, 0.05) !important; border-radius: 15px !important; }}
+    /* Chat Bubbles */
+    .stChatMessage {{ background: rgba(255, 255, 255, 0.08) !important; border-radius: 15px !important; margin: 10px 0; }}
 
-    /* LIVE GOD MODE CSS INJECTION */
+    /* GOD MODE INJECTION */
     {st.session_state.custom_css}
 </style>
-
 <div class="stars"></div>
-<div class="aurora"></div>
 <div class="rocket">🚀</div>
 """, unsafe_allow_html=True)
 
-# 3. Top HUD
-st.markdown('<div class="new-scroll-header">New Scroll</div>', unsafe_allow_html=True)
-current_time = datetime.now().strftime("%H:%M:%S")
-current_date = datetime.now().strftime("%Y-%m-%d")
-st.markdown(f'<div class="top-info">{st.session_state.location} | {current_date} | {current_time}</div>', unsafe_allow_html=True)
+# 3. Top HUD Display
+st.markdown('<div class="scroll-header">New Scroll</div>', unsafe_allow_html=True)
+hud_text = f"{st.session_state.location} | {datetime.now().strftime('%Y-%m-%d | %H:%M:%S')}"
+st.markdown(f'<div class="hud-info">{hud_text}</div>', unsafe_allow_html=True)
 
 # 4. Sidebar Logic
 with st.sidebar:
     if st.session_state.god_mode:
         st.warning("🛠️ GOD MODE ACTIVE")
-        st.session_state.oracle_rules = st.text_area("Edit Brain Memory", st.session_state.oracle_rules)
-        st.session_state.location = st.text_input("Change HUD Location", st.session_state.location)
+        st.session_state.oracle_rules = st.text_area("Brain Persona", st.session_state.oracle_rules)
+        st.session_state.location = st.text_input("Set HUD Location", st.session_state.location)
         
-        gui_input = st.text_area("Inject Custom Styles (CSS)", placeholder="e.g. .stApp { background: black !important; }")
-        if st.button("Apply Changes Live"):
-            st.session_state.custom_css = gui_input
+        gui_code = st.text_area("Live GUI CSS", placeholder=".stApp { background: black !important; }")
+        if st.button("Update GUI Live"):
+            st.session_state.custom_css = gui_code
             st.rerun()
             
         if st.button("Exit God Mode"):
@@ -108,12 +103,12 @@ with st.sidebar:
             st.rerun()
     else:
         st.title("📜 Archives")
-        api_key = st.sidebar.text_input("Enter Groq Key", type="password")
+        api_key = st.text_input("Enter Groq Key", type="password")
         if st.button("✨ Begin New Scroll"):
             st.session_state.messages = []
             st.rerun()
 
-# 5. Chat History logic
+# 5. Message Handling
 if "messages" not in st.session_state or len(st.session_state.messages) == 0:
     st.session_state.messages = [{"role": "system", "content": st.session_state.oracle_rules}]
 
@@ -122,9 +117,9 @@ for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-# 6. User Input
+# 6. Chat Logic (Fixed Data Access)
 if prompt := st.chat_input("Write upon the scroll..."):
-    # Secret Key to Unlock God Mode
+    # Secret Code to Unlock Panel
     if prompt == "qwertyytrewqabcd1234":
         st.session_state.god_mode = True
         st.rerun()
@@ -140,11 +135,13 @@ if prompt := st.chat_input("Write upon the scroll..."):
             client = Groq(api_key=api_key)
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
-                messages=st.session_state.messages,
-                temperature=0.9
+                messages=st.session_state.messages
             )
-            response = completion.choices.message.content
-            st.session_state.messages.append({"role": "assistant", "content": response})
+            
+            # FIXED: Correct way to access content in the Groq SDK
+            response_text = completion.choices[0].message.content
+            
+            st.session_state.messages.append({"role": "assistant", "content": response_text})
             st.rerun()
         except Exception as e:
-            st.error(f"Error: {str(e)}")
+            st.error(f"Celestial Error: {str(e)}")
