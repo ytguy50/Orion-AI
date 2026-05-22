@@ -1,2 +1,2 @@
 streamlit
-together
+huggingface_hub
