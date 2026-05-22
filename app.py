@@ -9,7 +9,7 @@ st.title("🔓 Orion AI")
 with st.sidebar:
     st.header("Settings")
     api_key = st.text_input("Enter Groq API Key", type="password")
-    st.info("Get your key at ://groq.com")
+    st.info("Get your key at console.groq.com")
     if st.button("Clear Chat"):
         st.session_state.messages = []
         st.rerun()
@@ -42,7 +42,7 @@ if prompt := st.chat_input("What is your command?"):
         try:
             client = Groq(api_key=api_key)
             
-            # Request to Cloud GPU using the latest Llama 3.3 model
+            # Request to Cloud GPU
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=st.session_state.messages,
@@ -52,8 +52,10 @@ if prompt := st.chat_input("What is your command?"):
                 stream=False
             )
 
+            # FIXED: Added [0] index to correctly access the message content
+            response = completion.choices[0].message.content
+            
             # Add AI response to memory
-            response = completion.choices.message.content
             st.session_state.messages.append({"role": "assistant", "content": response})
             
             with st.chat_message("assistant"):
